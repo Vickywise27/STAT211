@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STA 211 – Probability Quiz</title>
+<style>
+  :root {
+    --navy: #0A1628;
+    --teal: #0E8A8A;
+    --gold: #F0A500;
+    --light: #E8F4F8;
+    --mid: #1A3A5C;
+    --white: #FFFFFF;
+    --red: #C0392B;
+    --green: #1E8449;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Calibri, sans-serif;
+    background: #f0f4f8;
+    color: #1a1a2e;
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: var(--navy);
+    color: white;
+    padding: 18px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 12px rgba(0,0,0,.3);
+  }
+  .header h1 { font-size: 1.1rem; font-weight: 700; }
+  .header h1 span { color: var(--gold); }
+  .timer-box {
+    background: var(--mid);
+    border: 2px solid var(--teal);
+    border-radius: 8px;
+    padding: 6px 16px;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--gold);
+    min-width: 90px;
+    text-align: center;
+  }
+  .timer-box.warn { border-color: var(--gold); color: #fff; animation: pulse 1s infinite; }
+  .timer-box.danger { border-color: #e74c3c; color: #e74c3c; animation: pulse .5s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.6} }
+
+  /* ── PROGRESS ── */
+  .progress-bar-wrap {
+    background: var(--mid);
+    padding: 8px 28px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .progress-bar {
+    flex: 1;
+    height: 8px;
+    background: rgba(255,255,255,.15);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--teal), var(--gold));
+    border-radius: 4px;
+    transition: width .4s ease;
+  }
+  .progress-label { color: #88aacc; font-size: .85rem; min-width: 90px; text-align: right; }
+
+  /* ── MAP ── */
+  .q-map {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    padding: 10px 28px;
+    background: #f7fbfc;
+    border-bottom: 1px solid #ddd;
+  }
+  .q-map button {
+    width: 30px; height: 30px;
+    border-radius: 6px;
+    border: 2px solid #ccc;
+    background: white;
+    font-size: .75rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .q-map button.current { border-color: var(--teal); background: var(--teal); color: white; }
+  .q-map button.answered { border-color: var(--navy); background: var(--navy); color: white; }
+  .q-map button.correct-map { border-color: var(--green); background: var(--green); color: white; }
+  .q-map button.wrong-map { border-color: var(--red); background: var(--red); color: white; }
+
+  /* ── QUESTION CARD ── */
+  .main {
+    max-width: 820px;
+    margin: 24px auto;
+    padding: 0 16px 100px;
+  }
+  .q-card {
+    background: white;
+    border-radius: 14px;
+    box-shadow: 0 4px 20px rgba(0,0,0,.08);
+    overflow: hidden;
+    animation: fadeIn .3s ease;
+  }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+  .q-header {
+    background: var(--navy);
+    padding: 14px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .q-number { color: var(--gold); font-weight: 700; font-size: .9rem; }
+  .q-topic {
+    background: var(--teal);
+    color: white;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: .75rem;
+    font-weight: 600;
+  }
+  .q-body { padding: 24px 22px 18px; }
+  .q-text {
+    font-size: 1.05rem;
+    font-weight: 600;
+    line-height: 1.6;
+    margin-bottom: 20px;
+    color: #0a0a1a;
+  }
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .opt {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 16px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all .2s;
+    background: #fafafa;
+    line-height: 1.4;
+    font-size: .97rem;
+  }
+  .opt:hover:not(.locked) { border-color: var(--teal); background: #f0fafa; }
+  .opt .letter {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px; height: 28px;
+    border-radius: 50%;
+    background: #eee;
+    font-weight: 700;
+    font-size: .85rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .opt.selected { border-color: var(--navy); background: #eef4ff; }
+  .opt.selected .letter { background: var(--navy); color: white; }
+  .opt.correct { border-color: var(--green); background: #eafaf1; }
+  .opt.correct .letter { background: var(--green); color: white; }
+  .opt.wrong { border-color: var(--red); background: #fdf0ef; }
+  .opt.wrong .letter { background: var(--red); color: white; }
+  .opt.locked { cursor: default; }
+
+  /* ── EXPLANATION ── */
+  .explanation {
+    margin: 16px 0 4px;
+    padding: 14px 16px;
+    border-radius: 10px;
+    border-left: 4px solid var(--teal);
+    background: #f0fafa;
+    font-size: .93rem;
+    line-height: 1.6;
+    display: none;
+  }
+  .explanation.show { display: block; animation: fadeIn .3s ease; }
+  .explanation strong { color: var(--teal); }
+
+  /* ── FOOTER CONTROLS ── */
+  .q-footer {
+    padding: 14px 22px;
+    background: #f7fbfc;
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    padding: 9px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: .9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .btn-prev { background: #eee; color: #333; }
+  .btn-prev:hover { background: #ddd; }
+  .btn-skip { background: var(--gold); color: var(--navy); }
+  .btn-skip:hover { opacity: .9; }
+  .btn-submit { background: var(--teal); color: white; }
+  .btn-submit:hover { background: #0a7070; }
+  .btn-next { background: var(--navy); color: white; }
+  .btn-next:hover { background: var(--mid); }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* ── RESULT SCREEN ── */
+  #result-screen {
+    display: none;
+    max-width: 820px;
+    margin: 30px auto;
+    padding: 0 16px 60px;
+  }
+  .result-card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 40px rgba(0,0,0,.1);
+  }
+  .result-hero {
+    background: var(--navy);
+    padding: 36px 28px;
+    text-align: center;
+  }
+  .result-hero h2 { color: var(--gold); font-size: 1.8rem; margin-bottom: 8px; }
+  .result-hero p { color: #88aacc; font-size: 1rem; }
+  .score-ring {
+    width: 130px; height: 130px;
+    border-radius: 50%;
+    background: conic-gradient(var(--teal) var(--pct), rgba(255,255,255,.1) 0);
+    display: flex; align-items: center; justify-content: center;
+    margin: 24px auto;
+    position: relative;
+  }
+  .score-ring::before {
+    content: '';
+    position: absolute;
+    width: 100px; height: 100px;
+    background: var(--navy);
+    border-radius: 50%;
+  }
+  .score-num {
+    position: relative;
+    z-index: 1;
+    font-size: 2rem;
+    font-weight: 700;
+    color: white;
+  }
+  .grade-badge {
+    display: inline-block;
+    padding: 6px 20px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin-top: 6px;
+  }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1px;
+    background: #eee;
+    border-top: 1px solid #eee;
+  }
+  .stat-box {
+    background: white;
+    padding: 18px 12px;
+    text-align: center;
+  }
+  .stat-box .val { font-size: 1.6rem; font-weight: 700; color: var(--navy); }
+  .stat-box .lbl { font-size: .78rem; color: #888; margin-top: 3px; }
+
+  .review-section { padding: 24px; }
+  .review-section h3 { font-size: 1rem; font-weight: 700; color: var(--navy); margin-bottom: 14px; }
+  .review-item {
+    border: 1px solid #eee;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    overflow: hidden;
+  }
+  .review-item-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    cursor: pointer;
+    background: #fafafa;
+  }
+  .review-item-head:hover { background: #f0f4f8; }
+  .ri-icon {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .8rem; font-weight: 700; flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .ri-icon.ok { background: var(--green); color: white; }
+  .ri-icon.bad { background: var(--red); color: white; }
+  .ri-body { font-size: .88rem; color: #333; line-height: 1.4; }
+  .ri-answers {
+    padding: 0 14px 12px 46px;
+    font-size: .85rem;
+    line-height: 1.6;
+    display: none;
+  }
+  .ri-answers.open { display: block; }
+  .ri-answers .correct-ans { color: var(--green); font-weight: 600; }
+  .ri-answers .your-ans { color: var(--red); }
+
+  .result-actions { padding: 20px 24px; display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn-restart { background: var(--navy); color: white; }
+  .btn-restart:hover { background: var(--mid); }
+  .btn-review { background: var(--teal); color: white; }
+
+  /* ── START SCREEN ── */
+  #start-screen {
+    max-width: 600px;
+    margin: 60px auto;
+    padding: 0 16px;
+    text-align: center;
+  }
+  .start-card {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 40px rgba(0,0,0,.1);
+  }
+  .start-hero {
+    background: var(--navy);
+    padding: 40px 28px;
+    color: white;
+  }
+  .start-hero h1 { font-size: 2rem; margin-bottom: 8px; }
+  .start-hero h1 span { color: var(--gold); }
+  .start-hero p { color: #88aacc; }
+  .start-body { padding: 28px; }
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .info-item {
+    background: var(--light);
+    border-radius: 10px;
+    padding: 12px;
+    text-align: left;
+  }
+  .info-item .iv { font-size: 1.4rem; font-weight: 700; color: var(--navy); }
+  .info-item .il { font-size: .78rem; color: #666; }
+  .btn-start {
+    width: 100%;
+    padding: 14px;
+    background: var(--navy);
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 700;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all .2s;
+  }
+  .btn-start:hover { background: var(--mid); }
+
+  @media(max-width:600px){
+    .header h1 { font-size: .9rem; }
+    .q-text { font-size: .97rem; }
+    .info-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- START SCREEN -->
+<div id="start-screen">
+  <div class="start-card">
+    <div class="start-hero">
+      <h1>STA <span>211</span></h1>
+      <p style="font-size:1.2rem;font-weight:600;margin:6px 0">Probability & Random Variables</p>
+      <p>Mixed MCQ Quiz — All Topics</p>
+    </div>
+    <div class="start-body">
+      <div class="info-grid">
+        <div class="info-item"><div class="iv">70</div><div class="il">Questions</div></div>
+        <div class="info-item"><div class="iv">90 min</div><div class="il">Time Limit</div></div>
+        <div class="info-item"><div class="iv">10</div><div class="il">Topics Covered</div></div>
+        <div class="info-item"><div class="iv">FUTO</div><div class="il">STA Department</div></div>
+      </div>
+      <div style="text-align:left;font-size:.88rem;color:#555;margin-bottom:20px;line-height:1.7">
+        Topics: Permutation &amp; Combination · Probability Laws · Conditional Probability · Bayes' Theorem · 
+        Random Variables · Expectation &amp; Variance · Binomial · Poisson · Normal Distribution · CLT &amp; Chebyshev
+      </div>
+      <button class="btn-start" onclick="startQuiz()">▶ Start Quiz</button>
+    </div>
+  </div>
+</div>
+
+<!-- QUIZ SCREEN (hidden at start) -->
+<!-- CONFIRM MODAL -->
+<div id="confirm-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:999;align-items:center;justify-content:center">
+  <div style="background:white;border-radius:14px;padding:32px;max-width:400px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div style="font-size:2.5rem;margin-bottom:12px">&#x1F4CB;</div>
+    <h2 style="color:#0A1628;margin-bottom:8px">Submit Quiz?</h2>
+    <p id="modal-msg" style="color:#555;font-size:.95rem;margin-bottom:24px;line-height:1.6"></p>
+    <div style="display:flex;gap:12px;justify-content:center">
+      <button onclick="document.getElementById('confirm-modal').style.display='none'" style="padding:10px 24px;border:2px solid #ccc;border-radius:8px;background:white;font-size:.95rem;font-weight:600;cursor:pointer">Cancel</button>
+      <button onclick="doFinish()" style="padding:10px 24px;border:none;border-radius:8px;background:#0A1628;color:white;font-size:.95rem;font-weight:600;cursor:pointer">Yes, Submit</button>
+    </div>
+  </div>
+</div>
+
+<div id="quiz-screen" style="display:none">
+  <div class="header">
+    <h1>STA <span>211</span> — Probability Quiz</h1>
+    <div style="display:flex;align-items:center;gap:12px">
+      <button onclick="confirmFinish()" style="padding:8px 16px;background:#F0A500;color:#0A1628;border:none;border-radius:8px;font-size:.88rem;font-weight:700;cursor:pointer;white-space:nowrap">&#x1F3C1; Submit Quiz</button>
+      <div class="timer-box" id="timer">90:00</div>
+    </div>
+  </div>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    <div class="progress-label" id="progress-label">0 / 70</div>
+  </div>
+  <div class="q-map" id="q-map"></div>
+
+  <div class="main">
+    <div class="q-card" id="q-card">
+      <div class="q-header">
+        <span class="q-number" id="q-number">Q 1 of 70</span>
+        <span class="q-topic" id="q-topic"></span>
+      </div>
+      <div class="q-body">
+        <div class="q-text" id="q-text"></div>
+        <div class="options" id="options"></div>
+        <div class="explanation" id="explanation"></div>
+      </div>
+      <div class="q-footer">
+        <button class="btn btn-prev" id="btn-prev" onclick="navigate(-1)">◀ Prev</button>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-skip" id="btn-skip" onclick="skipQ()">Skip ▷</button>
+          <button class="btn btn-submit" id="btn-submit" onclick="submitQ()" disabled>Submit</button>
+        </div>
+        <button class="btn btn-next" id="btn-next" onclick="navigate(1)">Next ▶</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- RESULT SCREEN -->
+<div id="result-screen">
+  <div class="result-card">
+    <div class="result-hero">
+      <h2 id="result-title">Quiz Complete!</h2>
+      <p id="result-sub"></p>
+      <div class="score-ring" id="score-ring">
+        <span class="score-num" id="score-num"></span>
+      </div>
+      <span class="grade-badge" id="grade-badge"></span>
+    </div>
+    <div class="stats-grid" id="stats-grid"></div>
+    <div class="review-section">
+      <h3>📋 Question Review</h3>
+      <div id="review-list"></div>
+    </div>
+    <div class="result-actions">
+      <button class="btn btn-restart" onclick="restartQuiz()">🔄 Restart Quiz</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const QUESTIONS = [
+  // ── PERMUTATION & COMBINATION ──────────────────────────────────────────────────
+  { topic:"Permutation & Combination", q:"How many ways can 5 students be arranged in a row?",
+    opts:["60","100","120","150"], ans:2,
+    exp:"5! = 5×4×3×2×1 = <strong>120</strong>. This is a permutation of all 5 items." },
+
+  { topic:"Permutation & Combination", q:"In how many ways can a committee of 3 be selected from 10 people?",
+    opts:["30","60","120","720"], ans:2,
+    exp:"C(10,3) = 10!/(3!7!) = 720/6 = <strong>120</strong>. Order doesn't matter → combination." },
+
+  { topic:"Permutation & Combination", q:"A president and vice-president are to be chosen from 6 people. In how many ways can this be done?",
+    opts:["12","15","30","36"], ans:2,
+    exp:"P(6,2) = 6!/(6–2)! = 6×5 = <strong>30</strong>. Order matters (different roles) → permutation." },
+
+  { topic:"Permutation & Combination", q:"How many different ways can the letters of the word STATISTICS be arranged?",
+    opts:["3628800","50400","25200","10080"], ans:1,
+    exp:"STATISTICS has 10 letters: S×3, T×3, A×1, I×2, C×1. Arrangements = 10!/(3!3!1!2!1!) = <strong>50,400</strong>." },
+
+  { topic:"Permutation & Combination", q:"Out of 5 mathematicians and 7 physicists, a committee of 2 maths + 3 physics is to be formed. How many ways?",
+    opts:["210","350","420","630"], ans:1,
+    exp:"C(5,2) × C(7,3) = 10 × 35 = <strong>350</strong>." },
+
+  // ── PROBABILITY LAWS ───────────────────────────────────────────────────────────
+  { topic:"Probability Laws", q:"If P(A) = 0.4 and P(B) = 0.3 and A and B are mutually exclusive, what is P(A∪B)?",
+    opts:["0.12","0.58","0.70","1.00"], ans:2,
+    exp:"For mutually exclusive events: P(A∪B) = P(A)+P(B) = 0.4+0.3 = <strong>0.7</strong>." },
+
+  { topic:"Probability Laws", q:"If P(A) = 0.5, P(B) = 0.4, and P(A∩B) = 0.2, what is P(A∪B)?",
+    opts:["0.9","0.7","0.8","1.1"], ans:1,
+    exp:"P(A∪B) = P(A)+P(B)–P(A∩B) = 0.5+0.4–0.2 = <strong>0.7</strong>." },
+
+  { topic:"Probability Laws", q:"What is the probability of the complement of event A if P(A) = 0.65?",
+    opts:["0.35","0.65","1.00","0.45"], ans:0,
+    exp:"P(Aᶜ) = 1 – P(A) = 1 – 0.65 = <strong>0.35</strong>." },
+
+  { topic:"Probability Laws", q:"In a class, there are 20 boys and 10 girls. The probability of randomly selecting a boy is:",
+    opts:["1/2","1/3","2/3","1/4"], ans:2,
+    exp:"P(boy) = 20/30 = <strong>2/3</strong>." },
+
+  { topic:"Probability Laws", q:"A fair die is tossed once. What is the probability of getting at most 4?",
+    opts:["1/2","1/3","2/3","5/6"], ans:2,
+    exp:"At most 4 means {1,2,3,4} → 4 outcomes. P = 4/6 = <strong>2/3</strong>." },
+
+  // ── CONDITIONAL PROBABILITY ────────────────────────────────────────────────────
+  { topic:"Conditional Probability", q:"If P(A) = 0.5, P(B) = 0.3, and P(A∩B) = 0.15, are A and B independent?",
+    opts:["Yes, because P(A∩B) = P(A)P(B)","No, because P(A|B) ≠ P(A)","Yes, because P(A|B) = 0","Cannot be determined"], ans:0,
+    exp:"P(A)×P(B) = 0.5×0.3 = 0.15 = P(A∩B). ✓ Events are <strong>independent</strong>." },
+
+  { topic:"Conditional Probability", q:"A card is drawn from a 52-card deck. What is P(Queen | Face card)?",
+    opts:["1/4","1/3","1/13","4/52"], ans:1,
+    exp:"There are 12 face cards and 4 queens. P(Queen|Face) = 4/12 = <strong>1/3</strong>." },
+
+  { topic:"Conditional Probability", q:"A box has 3 white and 2 black balls. Two drawn without replacement. P(both black) = ?",
+    opts:["1/10","2/5","4/25","1/5"], ans:0,
+    exp:"P(B₁) = 2/5, P(B₂|B₁) = 1/4. P(both) = 2/5 × 1/4 = <strong>1/10</strong>." },
+
+  { topic:"Conditional Probability", q:"If P(A|B) = P(A), what does this tell us about events A and B?",
+    opts:["A and B are mutually exclusive","A and B are independent","A is a subset of B","A and B are complementary"], ans:1,
+    exp:"If P(A|B) = P(A), the occurrence of B does not affect A → events are <strong>independent</strong>." },
+
+  { topic:"Conditional Probability", q:"A game: player wins if 'Head' OR 'Six' appears. P(win) = ?",
+    opts:["1/2","7/12","2/3","5/6"], ans:1,
+    exp:"P(H)=1/2, P(6)=1/6. These are independent (not mutually exclusive). P(win) = 1–P(not H)×P(not 6) = 1–(1/2)(5/6) = <strong>7/12</strong>." },
+
+  // ── BAYES' THEOREM ─────────────────────────────────────────────────────────────
+  { topic:"Bayes' Theorem", q:"A factory has machines A₁ (40%), A₂ (35%), A₃ (25%) with defective rates 2%, 4%, 5%. P(defective) = ?",
+    opts:["0.0245","0.0345","0.0445","0.0545"], ans:1,
+    exp:"P(D) = (0.40×0.02)+(0.35×0.04)+(0.25×0.05) = 0.008+0.014+0.0125 = <strong>0.0345</strong>." },
+
+  { topic:"Bayes' Theorem", q:"What is the prior probability in Bayes' theorem?",
+    opts:["P(B|A)","P(A∩B)","P(A) before new evidence","P(A|B) after new evidence"], ans:2,
+    exp:"The <strong>prior probability</strong> P(A) is the initial probability before considering new evidence. The posterior is P(A|B) after evidence." },
+
+  { topic:"Bayes' Theorem", q:"Disease prevalence = 1%, test sensitivity = 90%, false positive = 10%. If positive, P(actually diseased) ≈ ?",
+    opts:["90%","50%","8.33%","1%"], ans:2,
+    exp:"P(T⁺) = (0.90×0.01)+(0.10×0.99) = 0.108. P(D|T⁺) = 0.009/0.108 ≈ <strong>8.33%</strong>. Low prevalence means many false positives!" },
+
+  { topic:"Bayes' Theorem", q:"A country has 3 match factories. A₃ produces twice A₂, A₂ produces twice A₁. Defective: A₁=2%, A₂=1%, A₃=3%. P(defective) = ?",
+    opts:["0.010","0.020","0.030","0.040"], ans:1,
+    exp:"P(A₁)=1/7, P(A₂)=2/7, P(A₃)=4/7. P(D)=(0.02×1/7)+(0.01×2/7)+(0.03×4/7) = (0.02+0.02+0.12)/7 = 0.16/7 ≈ <strong>0.02</strong>." },
+
+  // ── RANDOM VARIABLES ───────────────────────────────────────────────────────────
+  { topic:"Random Variables", q:"A discrete random variable X has PMF f(x) = kx for x = 1,2,3,4,5. What is the value of k?",
+    opts:["1/10","1/15","2/15","1/5"], ans:1,
+    exp:"Σkx = k(1+2+3+4+5) = 15k = 1 → k = <strong>1/15</strong>." },
+
+  { topic:"Random Variables", q:"Which of the following is TRUE about a continuous random variable?",
+    opts:["P(X = a) > 0 for any a","P(a ≤ X ≤ b) = area under the PDF curve","The PMF gives probabilities","The CDF decreases with x"], ans:1,
+    exp:"For a continuous RV, P(X=a)=0 and probabilities are areas: <strong>P(a≤X≤b) = ∫f(x)dx from a to b</strong>." },
+
+  { topic:"Random Variables", q:"The CDF F(x) of a random variable always satisfies:",
+    opts:["F(–∞) = 1 and F(∞) = 0","F(–∞) = 0 and F(∞) = 1","F(x) can be negative","F(x) is not monotone"], ans:1,
+    exp:"By definition: <strong>F(–∞) = 0</strong> and <strong>F(∞) = 1</strong>. The CDF is non-decreasing." },
+
+  // ── EXPECTATION & VARIANCE ─────────────────────────────────────────────────────
+  { topic:"Expectation & Variance", q:"X has PMF: P(1)=0.4, P(2)=0.1, P(3)=0.2, P(4)=0.3. What is E(X)?",
+    opts:["2.0","2.4","2.6","3.0"], ans:1,
+    exp:"E(X) = 1(0.4)+2(0.1)+3(0.2)+4(0.3) = 0.4+0.2+0.6+1.2 = <strong>2.4</strong>." },
+
+  { topic:"Expectation & Variance", q:"If E(X) = 2.4 and E(X²) = 7.4, what is Var(X)?",
+    opts:["1.64","4.00","5.76","3.00"], ans:0,
+    exp:"Var(X) = E(X²) – [E(X)]² = 7.4 – (2.4)² = 7.4 – 5.76 = <strong>1.64</strong>." },
+
+  { topic:"Expectation & Variance", q:"What is Var(3X + 5) if Var(X) = 4?",
+    opts:["12","36","41","17"], ans:1,
+    exp:"Var(aX+b) = a²Var(X). Var(3X+5) = 9×4 = <strong>36</strong>. Constants don't affect variance." },
+
+  { topic:"Expectation & Variance", q:"A fair coin is tossed 3 times. What is the expected number of heads?",
+    opts:["1.0","1.5","2.0","2.5"], ans:1,
+    exp:"E(X) = np = 3 × 0.5 = <strong>1.5</strong>. This is the mean of a Binomial(3, 0.5)." },
+
+  { topic:"Expectation & Variance", q:"A random variable X has E(X) = 5. What is E(2X – 3)?",
+    opts:["7","10","13","17"], ans:0,
+    exp:"E(aX+b) = aE(X)+b = 2(5)–3 = 10–3 = <strong>7</strong>." },
+
+  // ── BINOMIAL DISTRIBUTION ──────────────────────────────────────────────────────
+  { topic:"Binomial Distribution", q:"A fair coin is tossed 10 times. What is P(exactly 5 heads)?",
+    opts:["0.246","0.312","0.125","0.500"], ans:0,
+    exp:"P(X=5) = C(10,5)(0.5)⁵(0.5)⁵ = 252 × (1/1024) ≈ <strong>0.246</strong>." },
+
+  { topic:"Binomial Distribution", q:"25% of staff will overdraw their accounts. Out of 8 staff, P(none overdraws) = ?",
+    opts:["0.0751","0.1001","0.2563","0.3164"], ans:1,
+    exp:"P(X=0) = C(8,0)(0.25)⁰(0.75)⁸ = (0.75)⁸ ≈ <strong>0.1001</strong>." },
+
+  { topic:"Binomial Distribution", q:"For Binomial(n=8, p=0.25), what is P(not more than one overdraws)?",
+    opts:["0.2671","0.3671","0.4671","0.5671"], ans:1,
+    exp:"P(X≤1) = P(0)+P(1) = 0.1001 + C(8,1)(0.25)¹(0.75)⁷ = 0.1001+0.2670 = <strong>0.3671</strong>." },
+
+  { topic:"Binomial Distribution", q:"What is the variance of Binomial(n=10, p=0.4)?",
+    opts:["2.4","4.0","2.0","1.55"], ans:0,
+    exp:"Var(X) = npq = 10×0.4×0.6 = <strong>2.4</strong>." },
+
+  // ── POISSON DISTRIBUTION ───────────────────────────────────────────────────────
+  { topic:"Poisson Distribution", q:"On average 2 accidents occur per day. P(exactly 3 accidents) = ?",
+    opts:["0.180","0.271","0.135","0.090"], ans:0,
+    exp:"P(X=3) = e⁻²×2³/3! = 0.1353×8/6 ≈ <strong>0.180</strong>." },
+
+  { topic:"Poisson Distribution", q:"On average 3 cars pass a gate every 5 minutes. P(4 or more cars in 5 min) = ?",
+    opts:["0.35","0.65","0.47","0.53"], ans:0,
+    exp:"P(X≥4) = 1–P(X≤3) = 1–e⁻³(1+3+9/2+27/6) = 1–e⁻³(13.5) ≈ 1–0.6472 ≈ <strong>0.35</strong>." },
+
+  { topic:"Poisson Distribution", q:"The mean and variance of a Poisson distribution with parameter λ are:",
+    opts:["Mean=λ², Var=λ","Mean=λ, Var=λ","Mean=1/λ, Var=λ","Mean=λ, Var=λ²"], ans:1,
+    exp:"For Poisson(λ): <strong>Mean = Var = λ</strong>. This equal mean and variance is the key property." },
+
+  // ── NORMAL DISTRIBUTION ────────────────────────────────────────────────────────
+  { topic:"Normal Distribution", q:"X ~ N(120, 25). What is P(X < 130)?",
+    opts:["0.6554","0.8413","0.9772","0.5000"], ans:1,
+    exp:"Z = (130–120)/5 = 2.0. P(Z<2.0) = Φ(2.0) = <strong>0.9772</strong>. Wait — Z=(130-120)/√25 = 10/5 = 2.0 → 0.9772. (σ=√25=5)" },
+
+  { topic:"Normal Distribution", q:"Students' scores are N(75, 100). P(score < 60) = ?",
+    opts:["0.0668","0.1587","0.3085","0.4332"], ans:0,
+    exp:"Z = (60–75)/10 = –1.50. P(Z<–1.5) = 1–Φ(1.5) = 1–0.9332 = <strong>0.0668</strong>." },
+
+  { topic:"Normal Distribution", q:"X ~ N(75, 100). P(X > 80) = ?",
+    opts:["0.3085","0.6915","0.1915","0.5000"], ans:0,
+    exp:"Z = (80–75)/10 = 0.5. P(X>80) = P(Z>0.5) = 1–Φ(0.5) = 1–0.6915 = <strong>0.3085</strong>." },
+
+  { topic:"Normal Distribution", q:"Which property describes the Normal distribution?",
+    opts:["Always right-skewed","Bell-shaped and symmetric about the mean","Mean > Median > Mode","Variance equals mean"], ans:1,
+    exp:"The Normal distribution is <strong>bell-shaped and symmetric</strong> about its mean μ, where Mean = Median = Mode." },
+
+  // ── CLT & CHEBYSHEV ───────────────────────────────────────────────────────────
+  { topic:"CLT & Chebyshev", q:"By Chebyshev's inequality, at least what percentage of data lies within 2 standard deviations of the mean?",
+    opts:["68%","75%","89%","95%"], ans:1,
+    exp:"Chebyshev: 1–1/k² = 1–1/4 = 3/4 = <strong>75%</strong> for k=2. (Note: normal distribution gives ~95% but that's specific to normal.)" },
+
+  { topic:"CLT & Chebyshev", q:"The Central Limit Theorem states that for large n, the sample mean X̄ follows approximately:",
+    opts:["Any distribution","A Poisson distribution","A Normal distribution","A Uniform distribution"], ans:2,
+    exp:"The CLT guarantees that X̄ₙ → <strong>Normal(μ, σ²/n)</strong> regardless of the original distribution, as n→∞." },
+
+  { topic:"CLT & Chebyshev", q:"A sample of n=150 has mean x̄=15, SD=2. Using Chebyshev with k=3, at least how many values lie between 9 and 21?",
+    opts:["100","112","134","150"], ans:2,
+    exp:"k=(21–15)/2=3. 1–1/9=8/9≈89%. 0.89×150 ≈ <strong>134</strong> values." },
+
+  { topic:"CLT & Chebyshev", q:"If X₁,...,X₃₆ ~ iid with mean μ and σ=3, then the standard deviation of X̄₃₆ is:",
+    opts:["3","1","0.5","9"], ans:2,
+    exp:"SD(X̄) = σ/√n = 3/√36 = 3/6 = <strong>0.5</strong>." },
+
+  // ── PERMUTATION & COMBINATION (extra) ─────────────────────────────────────────
+  { topic:"Probability Laws", q:"Two events A and B satisfy P(A)=0.6, P(B)=0.5, P(A∩B)=0.3. What is P(Aᶜ∩Bᶜ)?",
+    opts:["0.2","0.5","0.3","0.1"], ans:0,
+    exp:"P(A∪B) = 0.6+0.5–0.3 = 0.8. P(Aᶜ∩Bᶜ) = 1–P(A∪B) = 1–0.8 = <strong>0.2</strong> (De Morgan)." },
+
+  { topic:"Probability Laws", q:"An experiment results in outcomes 2,4,6,8,10 with probabilities 0.11, 0.24, 0.42, 0.12, 0.11. If Y={2,4,6}, P(Y) = ?",
+    opts:["0.35","0.60","0.77","0.88"], ans:2,
+    exp:"P(Y) = P(2)+P(4)+P(6) = 0.11+0.24+0.42 = <strong>0.77</strong>." },
+
+  { topic:"Probability Laws", q:"If A⊂B (A is a subset of B), which of the following is TRUE?",
+    opts:["P(A) > P(B)","P(A) = P(B)","P(A) ≤ P(B)","P(A∩B) = 0"], ans:2,
+    exp:"If A⊂B, then every outcome in A is also in B. Therefore <strong>P(A) ≤ P(B)</strong>." },
+
+  { topic:"Probability Laws", q:"P(A∩Bᶜ) = ? given P(A)=0.6, P(A∩B)=0.3",
+    opts:["0.3","0.5","0.9","0.1"], ans:0,
+    exp:"P(A∩Bᶜ) = P(A) – P(A∩B) = 0.6 – 0.3 = <strong>0.3</strong>." },
+
+  // ── CONDITIONAL PROBABILITY (extra) ───────────────────────────────────────────
+  { topic:"Bayes' Theorem", q:"Given A₁ (40%), A₂ (35%), A₃ (25%) defective rates 2%, 4%, 5%, what is P(A₂|defective)?",
+    opts:["0.23","0.40","0.28","0.36"], ans:1,
+    exp:"P(A₂|D) = P(D|A₂)P(A₂)/P(D) = (0.04×0.35)/0.0345 = 0.014/0.0345 ≈ <strong>0.40</strong>." },
+
+  { topic:"Bayes' Theorem", q:"Bayes' theorem is primarily used to:",
+    opts:["Find the union of two events","Update probabilities based on new evidence","Calculate permutations","Find the mode of a distribution"], ans:1,
+    exp:"Bayes' theorem allows us to <strong>update prior probabilities</strong> P(A) to posterior probabilities P(A|B) after observing new evidence B." },
+
+  // ── RANDOM VARIABLES (extra) ───────────────────────────────────────────────────
+  { topic:"Random Variables", q:"A coin is tossed 3 times. Let X = number of heads. P(X=2) = ?",
+    opts:["1/8","3/8","1/2","2/3"], ans:1,
+    exp:"Sample space has 8 outcomes. {HHT,HTH,THH} = 3 outcomes. P(X=2) = <strong>3/8</strong>." },
+
+  { topic:"Random Variables", q:"For a valid PDF f(x), which condition must ALWAYS hold?",
+    opts:["f(x) can be negative","∫f(x)dx from –∞ to ∞ = 1 and f(x)≥0","f(x) = 1 for all x","f(x) > 1 somewhere"], ans:1,
+    exp:"A valid PDF must satisfy: <strong>f(x)≥0 for all x</strong> and <strong>∫f(x)dx = 1</strong> over the entire domain." },
+
+  { topic:"Random Variables", q:"The sum of the face values when two dice are thrown. How many outcomes give a sum of 7?",
+    opts:["4","5","6","7"], ans:2,
+    exp:"Pairs summing to 7: (1,6),(2,5),(3,4),(4,3),(5,2),(6,1) = <strong>6 outcomes</strong> out of 36." },
+
+  // ── EXPECTATION & VARIANCE (extra) ────────────────────────────────────────────
+  { topic:"Expectation & Variance", q:"A die is tossed twice. Getting > 4 is success. Find the mean of the number of successes.",
+    opts:["1/3","2/3","4/3","2/9"], ans:1,
+    exp:"P(success) = 2/6 = 1/3. X~Binomial(2,1/3). Mean = np = 2×1/3 = <strong>2/3</strong>." },
+
+  { topic:"Expectation & Variance", q:"For random variable X, E(X²) = 10 and E(X) = 3. What is Var(X)?",
+    opts:["1","7","13","19"], ans:0,
+    exp:"Var(X) = E(X²) – [E(X)]² = 10 – 9 = <strong>1</strong>." },
+
+  { topic:"Expectation & Variance", q:"The r-th moment about the origin is defined as:",
+    opts:["E[(X–μ)ʳ]","E[Xʳ]","r×E[X]","Var(X)ʳ"], ans:1,
+    exp:"The r-th moment about the <strong>origin</strong> is E[Xʳ] = Σxʳ·P(x). The r-th moment about the <em>mean</em> is E[(X–μ)ʳ]." },
+
+  { topic:"Expectation & Variance", q:"If E(X)=4 and E(Y)=3 and X,Y are independent, what is E(XY)?",
+    opts:["7","12","1","Cannot determine"], ans:1,
+    exp:"For independent X and Y: E(XY) = E(X)·E(Y) = 4×3 = <strong>12</strong>." },
+
+  // ── BINOMIAL (extra) ───────────────────────────────────────────────────────────
+  { topic:"Binomial Distribution", q:"A fair coin is tossed 4 times. What is P(X≥3 heads)?",
+    opts:["3/16","5/16","1/4","1/2"], ans:1,
+    exp:"P(3)+P(4) = C(4,3)(0.5)⁴ + C(4,4)(0.5)⁴ = 4/16+1/16 = <strong>5/16</strong>." },
+
+  { topic:"Binomial Distribution", q:"For Binomial(n=4, p=0.5), verify E(X) = np. What is it?",
+    opts:["1","2","3","4"], ans:1,
+    exp:"E(X) = np = 4×0.5 = <strong>2</strong>. Verify: 0(1/16)+1(4/16)+2(6/16)+3(4/16)+4(1/16) = 32/16 = 2 ✓" },
+
+  { topic:"Binomial Distribution", q:"What shape does the Binomial distribution take as p approaches 0.5?",
+    opts:["Right-skewed","Left-skewed","More symmetric / bell-shaped","Uniform"], ans:2,
+    exp:"As p→0.5, the Binomial distribution becomes more <strong>symmetric and bell-shaped</strong>. It approximates Normal when n is large." },
+
+  { topic:"Binomial Distribution", q:"The MGF of Binomial(n,p) is:",
+    opts:["(q+peᵗ)ⁿ","e^{np(eᵗ–1)}","pe^t/(1–qeᵗ)","(peᵗ+q)"], ans:0,
+    exp:"MGF of Binomial(n,p) = <strong>(q+peᵗ)ⁿ</strong> where q=1–p." },
+
+  // ── POISSON (extra) ────────────────────────────────────────────────────────────
+  { topic:"Poisson Distribution", q:"1 in every 1000 houses has fire per year. Village has 3500 houses. P(at most 1 house has fire) ≈ ?",
+    opts:["0.1359","0.2707","0.3679","0.5000"], ans:0,
+    exp:"λ=np=3500×0.001=3.5. P(X≤1)=P(0)+P(1) = e⁻³·⁵(1+3.5) ≈ 0.0302×4.5 ≈ <strong>0.136</strong>." },
+
+  { topic:"Poisson Distribution", q:"For Poisson distribution, the mode is:",
+    opts:["λ+1","λ–1","The largest integer ≤ λ","Always equal to 1"], ans:2,
+    exp:"The mode of Poisson(λ) is the <strong>largest integer ≤ λ</strong>. If λ is integer, both λ and λ–1 are modes." },
+
+  { topic:"Poisson Distribution", q:"The MGF of Poisson(λ) is:",
+    opts:["e^{λ(eᵗ–1)}","(1–λt)⁻¹","λeᵗ","e^{λt}"], ans:0,
+    exp:"MGF of Poisson(λ) = <strong>e^{λ(eᵗ–1)}</strong>. Differentiating gives mean = variance = λ." },
+
+  // ── NORMAL (extra) ─────────────────────────────────────────────────────────────
+  { topic:"Normal Distribution", q:"X~N(75,100). P(70 < X < 90) = ? [Use Φ(1.5)=0.9332, Φ(0.5)=0.6915]",
+    opts:["0.2417","0.5762","0.6247","0.8000"], ans:2,
+    exp:"Z₁=(70–75)/10=–0.5, Z₂=(90–75)/10=1.5. P = Φ(1.5)–Φ(–0.5) = 0.9332–(1–0.6915) = 0.9332–0.3085 = <strong>0.6247</strong>." },
+
+  { topic:"Normal Distribution", q:"What percentage of data falls within 1 standard deviation of the mean in a Normal distribution?",
+    opts:["68%","75%","95%","99.7%"], ans:0,
+    exp:"Empirical rule: <strong>68%</strong> within 1σ, 95% within 2σ, 99.7% within 3σ." },
+
+  { topic:"Normal Distribution", q:"If Z is standard normal, P(Z > 1.62) ≈ ? [Φ(1.62)=0.9474]",
+    opts:["0.9474","0.0526","0.4474","0.5526"], ans:1,
+    exp:"P(Z>1.62) = 1–Φ(1.62) = 1–0.9474 = <strong>0.0526</strong>." },
+
+  // ── GEOMETRIC & OTHER DISTRIBUTIONS ───────────────────────────────────────────
+  { topic:"Geometric Distribution", q:"A student passes an exam with probability 2/5 each sitting. P(passing at most 3 sittings) = ?",
+    opts:["0.576","0.784","0.648","0.500"], ans:1,
+    exp:"P(X≤3) = P(0)+P(1)+P(2) fails then pass = (2/5)+(3/5)(2/5)+(3/5)²(2/5) = 0.4+0.24+0.144 = <strong>0.784</strong>." },
+
+  { topic:"Geometric Distribution", q:"For Geometric distribution with p=0.3, what is P(X=5)?",
+    opts:["0.0720","0.0595","0.1681","0.3000"], ans:0,
+    exp:"P(X=5) = (1–p)⁴·p = (0.7)⁴×0.3 = 0.2401×0.3 = <strong>0.0720</strong>." },
+
+  { topic:"Geometric Distribution", q:"What is the mean of a Geometric distribution with parameter p?",
+    opts:["p","1/p","p(1–p)","(1–p)/p²"], ans:1,
+    exp:"Mean of Geometric(p) = <strong>1/p</strong>. Variance = (1–p)/p² = q/p²." },
+
+  // ── CLT & CHEBYSHEV (extra) ────────────────────────────────────────────────────
+  { topic:"CLT & Chebyshev", q:"By Chebyshev, at least what % of data lies within 3 standard deviations of the mean?",
+    opts:["75%","89%","95%","99%"], ans:1,
+    exp:"1 – 1/k² = 1 – 1/9 = 8/9 ≈ <strong>89%</strong> for k=3. Holds for ANY distribution." },
+
+  { topic:"CLT & Chebyshev", q:"The standard error of the sample mean X̄ when σ=10 and n=100 is:",
+    opts:["10","1","0.1","100"], ans:1,
+    exp:"SE(X̄) = σ/√n = 10/√100 = 10/10 = <strong>1</strong>." },
+];
+
+// ── STATE ──────────────────────────────────────────────
+let current = 0;
+let answers = new Array(QUESTIONS.length).fill(null);
+let submitted = new Array(QUESTIONS.length).fill(false);
+let skipped = new Array(QUESTIONS.length).fill(false);
+let timerInterval = null;
+let timeLeft = 90 * 60;
+let quizStarted = false;
+
+// ── START ───────────────────────────────────────────────
+function startQuiz() {
+  document.getElementById('start-screen').style.display = 'none';
+  document.getElementById('quiz-screen').style.display = 'block';
+  buildMap();
+  renderQ();
+  startTimer();
+}
+
+function startTimer() {
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    const m = Math.floor(timeLeft / 60).toString().padStart(2,'0');
+    const s = (timeLeft % 60).toString().padStart(2,'0');
+    const tb = document.getElementById('timer');
+    tb.textContent = `${m}:${s}`;
+    tb.className = 'timer-box';
+    if (timeLeft <= 120) tb.classList.add('warn');
+    if (timeLeft <= 30) tb.classList.add('danger');
+    if (timeLeft <= 0) { clearInterval(timerInterval); finishQuiz(); }
+  }, 1000);
+}
+
+// ── BUILD MAP ───────────────────────────────────────────
+function buildMap() {
+  const map = document.getElementById('q-map');
+  map.innerHTML = '';
+  QUESTIONS.forEach((_, i) => {
+    const b = document.createElement('button');
+    b.textContent = i + 1;
+    b.onclick = () => { current = i; renderQ(); };
+    map.appendChild(b);
+  });
+}
+
+function updateMap() {
+  const btns = document.getElementById('q-map').querySelectorAll('button');
+  btns.forEach((b, i) => {
+    b.className = '';
+    if (i === current) b.classList.add('current');
+    else if (submitted[i]) b.classList.add(answers[i] === QUESTIONS[i].ans ? 'correct-map' : 'wrong-map');
+    else if (answers[i] !== null) b.classList.add('answered');
+  });
+}
+
+// ── RENDER ──────────────────────────────────────────────
+function renderQ() {
+  const q = QUESTIONS[current];
+  document.getElementById('q-number').textContent = `Q ${current+1} of ${QUESTIONS.length}`;
+  document.getElementById('q-topic').textContent = q.topic;
+  document.getElementById('q-text').textContent = q.q;
+
+  const opted = document.getElementById('options');
+  opted.innerHTML = '';
+  const letters = ['A','B','C','D'];
+  q.opts.forEach((o, i) => {
+    const div = document.createElement('div');
+    div.className = 'opt';
+    if (submitted[current]) div.classList.add('locked');
+    if (answers[current] === i) div.classList.add('selected');
+    if (submitted[current]) {
+      if (i === q.ans) div.classList.add('correct');
+      else if (answers[current] === i) div.classList.add('wrong');
+    }
+    div.innerHTML = `<span class="letter">${letters[i]}</span><span>${o}</span>`;
+    if (!submitted[current]) div.onclick = () => selectOption(i);
+    opted.appendChild(div);
+  });
+
+  const exp = document.getElementById('explanation');
+  exp.innerHTML = `<strong>Explanation:</strong> ${q.exp}`;
+  exp.className = 'explanation' + (submitted[current] ? ' show' : '');
+
+  const sub = document.getElementById('btn-submit');
+  sub.disabled = answers[current] === null || submitted[current];
+  sub.textContent = submitted[current] ? '✓ Submitted' : 'Submit';
+
+  document.getElementById('btn-skip').style.display = submitted[current] ? 'none' : 'inline-block';
+  document.getElementById('btn-prev').disabled = current === 0;
+  document.getElementById('btn-next').disabled = current === QUESTIONS.length - 1;
+
+  // progress
+  const done = submitted.filter(Boolean).length;
+  document.getElementById('progress-fill').style.width = `${(done/QUESTIONS.length)*100}%`;
+  document.getElementById('progress-label').textContent = `${done} / ${QUESTIONS.length} answered`;
+
+  updateMap();
+}
+
+function selectOption(i) {
+  if (submitted[current]) return;
+  answers[current] = i;
+  renderQ();
+}
+
+function submitQ() {
+  if (answers[current] === null || submitted[current]) return;
+  submitted[current] = true;
+  renderQ();
+  // auto-advance after 1.5s
+  if (current < QUESTIONS.length - 1) {
+    setTimeout(() => { current++; renderQ(); }, 1600);
+  } else {
+    setTimeout(checkAllDone, 1600);
+  }
+}
+
+function skipQ() {
+  skipped[current] = true;
+  if (current < QUESTIONS.length - 1) { current++; renderQ(); }
+}
+
+function navigate(dir) {
+  const next = current + dir;
+  if (next >= 0 && next < QUESTIONS.length) { current = next; renderQ(); }
+}
+
+function checkAllDone() {
+  if (submitted.every(Boolean)) finishQuiz();
+}
+
+// ── FINISH ──────────────────────────────────────────────
+function confirmFinish() {
+  const total = QUESTIONS.length;
+  const attempted = submitted.filter(Boolean).length;
+  const unanswered = total - attempted;
+  let msg = `You have answered <strong>${attempted}</strong> of <strong>${total}</strong> questions.`;
+  if (unanswered > 0) msg += `<br><span style="color:#C0392B">${unanswered} question(s) unanswered will be marked wrong.</span>`;
+  msg += '<br><br>Are you sure you want to submit?';
+  document.getElementById('modal-msg').innerHTML = msg;
+  document.getElementById('confirm-modal').style.display = 'flex';
+}
+
+function doFinish() {
+  document.getElementById('confirm-modal').style.display = 'none';
+  finishQuiz();
+}
+
+function finishQuiz() {
+  clearInterval(timerInterval);
+  document.getElementById('quiz-screen').style.display = 'none';
+  document.getElementById('result-screen').style.display = 'block';
+  showResults();
+}
+
+function showResults() {
+  const total = QUESTIONS.length;
+  const attempted = submitted.filter(Boolean).length;
+  const correct = QUESTIONS.filter((q, i) => submitted[i] && answers[i] === q.ans).length;
+  const wrong = attempted - correct;
+  const pct = attempted ? Math.round((correct / attempted) * 100) : 0;
+  const ovPct = Math.round((correct / total) * 100);
+
+  // grade
+  let grade, gColor;
+  if (ovPct >= 70) { grade = 'A'; gColor = '#1E8449'; }
+  else if (ovPct >= 60) { grade = 'B'; gColor = '#2471A3'; }
+  else if (ovPct >= 50) { grade = 'C'; gColor = '#D4AC0D'; }
+  else if (ovPct >= 45) { grade = 'D'; gColor = '#E67E22'; }
+  else { grade = 'F'; gColor = '#C0392B'; }
+
+  document.getElementById('result-title').textContent = ovPct >= 50 ? '🎉 Well Done!' : '📚 Keep Studying!';
+  document.getElementById('result-sub').textContent = `You scored ${correct} out of ${total}`;
+  document.getElementById('score-num').textContent = `${ovPct}%`;
+  document.getElementById('score-ring').style.setProperty('--pct', `${ovPct * 3.6}deg`);
+
+  const gb = document.getElementById('grade-badge');
+  gb.textContent = `Grade: ${grade}`;
+  gb.style.background = gColor;
+  gb.style.color = 'white';
+
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-box"><div class="val" style="color:#1E8449">${correct}</div><div class="lbl">Correct</div></div>
+    <div class="stat-box"><div class="val" style="color:#C0392B">${wrong}</div><div class="lbl">Wrong</div></div>
+    <div class="stat-box"><div class="val" style="color:#E67E22">${total - attempted}</div><div class="lbl">Skipped</div></div>
+    <div class="stat-box"><div class="val">${attempted}</div><div class="lbl">Attempted</div></div>
+    <div class="stat-box"><div class="val">${pct}%</div><div class="lbl">Accuracy</div></div>
+  `;
+
+  // review list
+  const rl = document.getElementById('review-list');
+  rl.innerHTML = '';
+  QUESTIONS.forEach((q, i) => {
+    const isCorrect = submitted[i] && answers[i] === q.ans;
+    const wasSubmitted = submitted[i];
+    const div = document.createElement('div');
+    div.className = 'review-item';
+    div.innerHTML = `
+      <div class="review-item-head" onclick="this.nextElementSibling.classList.toggle('open')">
+        <span class="ri-icon ${isCorrect ? 'ok' : (wasSubmitted ? 'bad' : '')}">${isCorrect ? '✓' : (wasSubmitted ? '✗' : '–')}</span>
+        <span class="ri-body"><strong>Q${i+1}:</strong> ${q.q.substring(0,90)}${q.q.length>90?'…':''}</span>
+      </div>
+      <div class="ri-answers">
+        <div class="correct-ans">✓ Correct: ${q.opts[q.ans]}</div>
+        ${wasSubmitted && answers[i] !== q.ans ? `<div class="your-ans">✗ Your answer: ${answers[i]!==null?q.opts[answers[i]]:'Not answered'}</div>` : ''}
+        <div style="color:#555;margin-top:4px">${q.exp.replace(/<strong>/g,'<b>').replace(/<\/strong>/g,'</b>')}</div>
+      </div>`;
+    rl.appendChild(div);
+  });
+}
+
+function restartQuiz() {
+  current = 0;
+  answers = new Array(QUESTIONS.length).fill(null);
+  submitted = new Array(QUESTIONS.length).fill(false);
+  skipped = new Array(QUESTIONS.length).fill(false);
+  timeLeft = 90 * 60;
+  document.getElementById('result-screen').style.display = 'none';
+  document.getElementById('start-screen').style.display = 'block';
+}
+</script>
+</body>
+</html>
